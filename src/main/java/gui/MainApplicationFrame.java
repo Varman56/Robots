@@ -144,10 +144,6 @@ public class MainApplicationFrame extends JFrame {
 //        return menuBar;
 //    }
     private JMenuBar generateMenuBar() {
-        UIManager.put("OptionPane.yesButtonText", "Да");
-        UIManager.put("OptionPane.noButtonText", "Нет");
-        UIManager.put("OptionPane.cancelButtonText", "Отмена");
-        UIManager.put("OptionPane.okButtonText", "ОК");
         JMenuBar menuBar = new JMenuBar();
 
         menuBar.add(jMenuInitLookAndFeel());
