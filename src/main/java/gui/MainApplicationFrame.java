@@ -1,13 +1,17 @@
 package gui;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 
+import backend.SaveManager;
 import log.Logger;
 
 /**
@@ -65,7 +69,10 @@ public class MainApplicationFrame extends JFrame {
         RussianSwingInitializer.initialize();
     }
 
+    private final SaveManager saveManager = new SaveManager("WindowsPosition.json");
     private final JDesktopPane desktopPane = new JDesktopPane();
+    private final List<JFrame> frames = new ArrayList<>();
+    private final List<JInternalFrame> internalFrames = new ArrayList<>();
 
     public MainApplicationFrame() {
         setDefaultCloseOperation(
@@ -93,25 +100,62 @@ public class MainApplicationFrame extends JFrame {
         addWindow(logWindow);
 
         GameWindow gameWindow = new GameWindow();
-        gameWindow.setSize(400, 400);
+        tryToLoad(gameWindow, "gameWindow", 400, 400, 320, 10, false);
         addWindow(gameWindow);
 
         setJMenuBar(generateMenuBar());
+        SwingUtilities.invokeLater(() -> {
+        tryToLoad(this, "main", screenSize.width, screenSize.height, 0, 0, true);});
+        SaveInternalFrameListener(gameWindow, "gameWindow");
+        SaveInternalFrameListener(logWindow, "logger");
+        SaveWindowListener(this, "main");
     }
 
     protected LogWindow createLogWindow() {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setLocation(10, 10);
-        logWindow.setSize(300, 800);
-        setMinimumSize(logWindow.getSize());
+        tryToLoad(logWindow, "logger", 300, 800, 10, 10, false);
+        setMinimumSize(new Dimension(300, 800));
         logWindow.pack();
         Logger.debug("Протокол работает");
         return logWindow;
     }
 
+    protected void tryToLoad(Component window, String title, int defaultWidth, int defaultHeight, int locX, int locY, boolean defaultMaximized) {
+        if (!saveManager.loadWindow(window, title)) {
+            if (defaultMaximized && window instanceof Frame) {
+                Frame frame = (Frame) window;
+                SwingUtilities.invokeLater(() -> {
+                    frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+                });
+            } else {
+                window.setLocation(locX, locY);
+                window.setSize(defaultWidth, defaultHeight);
+            }
+        }
+    }
+
     protected void addWindow(JInternalFrame frame) {
         desktopPane.add(frame);
+        internalFrames.add(frame);
         frame.setVisible(true);
+    }
+
+    protected void SaveWindowListener(JFrame frame, String title) {
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                saveManager.saveWindow(frame, title);
+            }
+        });
+    }
+
+    protected void SaveInternalFrameListener(JInternalFrame frame, String title) {
+        frame.addInternalFrameListener(new InternalFrameAdapter() {
+            @Override
+            public void internalFrameClosing(InternalFrameEvent e) {
+                saveManager.saveWindow(frame, title);
+            }
+        });
     }
 
 //    protected JMenuBar createMenuBar() {
@@ -227,14 +271,13 @@ public class MainApplicationFrame extends JFrame {
         );
 
         if (result == JOptionPane.YES_OPTION) {
+            for (JInternalFrame window : internalFrames) {
+                window.doDefaultCloseAction();
+            }
+            saveManager.saveWindow(this, "main");
             System.exit(0);
-        } else {
-            SwingUtilities.invokeLater(() -> {
-                setVisible(true);
-                setExtendedState(JFrame.MAXIMIZED_BOTH);
-                toFront();
-                requestFocus();
-            });
+//            WindowEvent closingEvent = new WindowEvent(this, WindowEvent.WINDOW_CLOSING);
+//            this.dispatchEvent(closingEvent);
         }
     }
 }
