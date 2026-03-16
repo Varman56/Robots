@@ -1,13 +1,18 @@
 package gui;
 
-import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 
+import backend.SaveManager;
 import log.Logger;
 
 /**
@@ -65,7 +70,10 @@ public class MainApplicationFrame extends JFrame {
         RussianSwingInitializer.initialize();
     }
 
+    private final SaveManager saveManager = new SaveManager("WindowsPosition.json");
     private final JDesktopPane desktopPane = new JDesktopPane();
+    private final List<JFrame> frames = new ArrayList<>();
+    private final HashMap<String, JInternalFrame> internalFrames = new HashMap<>();
 
     public MainApplicationFrame() {
         setDefaultCloseOperation(
@@ -90,28 +98,56 @@ public class MainApplicationFrame extends JFrame {
 
 
         LogWindow logWindow = createLogWindow();
-        addWindow(logWindow);
+        addWindow(logWindow, "logger");
 
         GameWindow gameWindow = new GameWindow();
-        gameWindow.setSize(400, 400);
-        addWindow(gameWindow);
+        tryToLoad(gameWindow, "gameWindow", 400, 400, 320, 10, false);
+        addWindow(gameWindow, "gameWindow");
 
         setJMenuBar(generateMenuBar());
+        SwingUtilities.invokeLater(() -> {
+        tryToLoad(this, "main", screenSize.width, screenSize.height, 0, 0, true);});
+        for (String title : internalFrames.keySet()) {
+            SaveInternalFrameListener(internalFrames.get(title), title);
+        }
     }
 
     protected LogWindow createLogWindow() {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setLocation(10, 10);
-        logWindow.setSize(300, 800);
-        setMinimumSize(logWindow.getSize());
+        tryToLoad(logWindow, "logger", 300, 800, 10, 10, false);
+        setMinimumSize(new Dimension(300, 800));
         logWindow.pack();
         Logger.debug("Протокол работает");
         return logWindow;
     }
 
-    protected void addWindow(JInternalFrame frame) {
+    protected void tryToLoad(Component window, String title, int defaultWidth, int defaultHeight, int locX, int locY, boolean defaultMaximized) {
+        if (!saveManager.loadWindow(window, title)) {
+            if (defaultMaximized && window instanceof Frame) {
+                Frame frame = (Frame) window;
+                SwingUtilities.invokeLater(() -> {
+                    frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+                });
+            } else {
+                window.setLocation(locX, locY);
+                window.setSize(defaultWidth, defaultHeight);
+            }
+        }
+    }
+
+    protected void addWindow(JInternalFrame frame, String title) {
         desktopPane.add(frame);
+        internalFrames.put(title, frame);
         frame.setVisible(true);
+    }
+
+    protected void SaveInternalFrameListener(JInternalFrame frame, String title) {
+        frame.addInternalFrameListener(new InternalFrameAdapter() {
+            @Override
+            public void internalFrameClosing(InternalFrameEvent e) {
+                saveManager.saveWindow(frame, title);
+            }
+        });
     }
 
 //    protected JMenuBar createMenuBar() {
@@ -227,14 +263,22 @@ public class MainApplicationFrame extends JFrame {
         );
 
         if (result == JOptionPane.YES_OPTION) {
+            for (JInternalFrame window : internalFrames.values()) {
+                window.doDefaultCloseAction();
+            }
+//            for (String title : internalFrames.keySet()) {
+//                saveManager.saveWindow(internalFrames.get(title), title);
+//            }
+            saveManager.saveWindow(this, "main");
+            // this.dispose();
+//            SwingUtilities.invokeLater(() -> {
+//                System.exit(0);
+//            });
             System.exit(0);
-        } else {
-            SwingUtilities.invokeLater(() -> {
-                setVisible(true);
-                setExtendedState(JFrame.MAXIMIZED_BOTH);
-                toFront();
-                requestFocus();
-            });
+            // this.dispose();
+
+            // WindowEvent closingEvent = new WindowEvent(this, WindowEvent.WINDOW_CLOSED);
+            // this.dispatchEvent(closingEvent);
         }
     }
 }
