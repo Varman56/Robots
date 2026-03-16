@@ -5,6 +5,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.*;
@@ -72,7 +73,7 @@ public class MainApplicationFrame extends JFrame {
     private final SaveManager saveManager = new SaveManager("WindowsPosition.json");
     private final JDesktopPane desktopPane = new JDesktopPane();
     private final List<JFrame> frames = new ArrayList<>();
-    private final List<JInternalFrame> internalFrames = new ArrayList<>();
+    private final HashMap<String, JInternalFrame> internalFrames = new HashMap<>();
 
     public MainApplicationFrame() {
         setDefaultCloseOperation(
@@ -97,18 +98,18 @@ public class MainApplicationFrame extends JFrame {
 
 
         LogWindow logWindow = createLogWindow();
-        addWindow(logWindow);
+        addWindow(logWindow, "logger");
 
         GameWindow gameWindow = new GameWindow();
         tryToLoad(gameWindow, "gameWindow", 400, 400, 320, 10, false);
-        addWindow(gameWindow);
+        addWindow(gameWindow, "gameWindow");
 
         setJMenuBar(generateMenuBar());
         SwingUtilities.invokeLater(() -> {
         tryToLoad(this, "main", screenSize.width, screenSize.height, 0, 0, true);});
-        SaveInternalFrameListener(gameWindow, "gameWindow");
-        SaveInternalFrameListener(logWindow, "logger");
-        SaveWindowListener(this, "main");
+        for (String title : internalFrames.keySet()) {
+            SaveInternalFrameListener(internalFrames.get(title), title);
+        }
     }
 
     protected LogWindow createLogWindow() {
@@ -134,19 +135,10 @@ public class MainApplicationFrame extends JFrame {
         }
     }
 
-    protected void addWindow(JInternalFrame frame) {
+    protected void addWindow(JInternalFrame frame, String title) {
         desktopPane.add(frame);
-        internalFrames.add(frame);
+        internalFrames.put(title, frame);
         frame.setVisible(true);
-    }
-
-    protected void SaveWindowListener(JFrame frame, String title) {
-        frame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                saveManager.saveWindow(frame, title);
-            }
-        });
     }
 
     protected void SaveInternalFrameListener(JInternalFrame frame, String title) {
@@ -271,13 +263,22 @@ public class MainApplicationFrame extends JFrame {
         );
 
         if (result == JOptionPane.YES_OPTION) {
-            for (JInternalFrame window : internalFrames) {
+            for (JInternalFrame window : internalFrames.values()) {
                 window.doDefaultCloseAction();
             }
+//            for (String title : internalFrames.keySet()) {
+//                saveManager.saveWindow(internalFrames.get(title), title);
+//            }
             saveManager.saveWindow(this, "main");
+            // this.dispose();
+//            SwingUtilities.invokeLater(() -> {
+//                System.exit(0);
+//            });
             System.exit(0);
-//            WindowEvent closingEvent = new WindowEvent(this, WindowEvent.WINDOW_CLOSING);
-//            this.dispatchEvent(closingEvent);
+            // this.dispose();
+
+            // WindowEvent closingEvent = new WindowEvent(this, WindowEvent.WINDOW_CLOSED);
+            // this.dispatchEvent(closingEvent);
         }
     }
 }
