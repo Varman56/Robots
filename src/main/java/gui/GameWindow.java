@@ -9,12 +9,11 @@ import javax.swing.JPanel;
 
 public class GameWindow extends JInternalFrame
 {
-    private RobotPresenter robotPresenter;
+    private final RobotPresenter robotPresenter = new RobotPresenter();
 
     public GameWindow() 
     {
         super("Игровое поле", true, true, true, true);
-        robotPresenter = new RobotPresenter();
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(robotPresenter.gameVisualizer, BorderLayout.CENTER);
         getContentPane().add(panel);

@@ -1,5 +1,7 @@
 package model;
 
+import gui.GameVisualizer;
+
 import java.awt.*;
 
 public class RobotModel {
@@ -44,9 +46,9 @@ public class RobotModel {
         double diff = Math.atan2(Math.sin(angleToTarget - m_robotDirection), Math.cos(angleToTarget - m_robotDirection));
         if (diff > 0)
         {
-            angularVelocity = maxAngularVelocity;
+            angularVelocity += maxAngularVelocity;
         }else {
-            angularVelocity = -maxAngularVelocity;
+            angularVelocity -= maxAngularVelocity;
         }
 
         moveRobot(velocity, angularVelocity, 10);
