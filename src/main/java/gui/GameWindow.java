@@ -1,5 +1,7 @@
 package gui;
 
+import presenter.RobotPresenter;
+
 import java.awt.BorderLayout;
 
 import javax.swing.JInternalFrame;
@@ -7,13 +9,14 @@ import javax.swing.JPanel;
 
 public class GameWindow extends JInternalFrame
 {
-    private final GameVisualizer m_visualizer;
+    private RobotPresenter robotPresenter;
+
     public GameWindow() 
     {
         super("Игровое поле", true, true, true, true);
-        m_visualizer = new GameVisualizer();
+        robotPresenter = new RobotPresenter();
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(m_visualizer, BorderLayout.CENTER);
+        panel.add(robotPresenter.gameVisualizer, BorderLayout.CENTER);
         getContentPane().add(panel);
         pack();
     }
