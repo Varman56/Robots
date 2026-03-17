@@ -14,6 +14,7 @@ import javax.swing.event.InternalFrameEvent;
 
 import backend.SaveManager;
 import log.Logger;
+import presenter.RobotPresenter;
 
 /**
  * Что требуется сделать:
@@ -70,12 +71,12 @@ public class MainApplicationFrame extends JFrame {
         RussianSwingInitializer.initialize();
     }
 
-    private final SaveManager saveManager = new SaveManager("WindowsPosition.json");
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private final List<JFrame> frames = new ArrayList<>();
-    private final HashMap<String, JInternalFrame> internalFrames = new HashMap<>();
+    public final HashMap<String, JInternalFrame> internalFrames = new HashMap<>();
+    private RobotPresenter presenter;
 
     public MainApplicationFrame() {
+
         setDefaultCloseOperation(
                 WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -96,59 +97,21 @@ public class MainApplicationFrame extends JFrame {
 
         setContentPane(desktopPane);
 
-
-        LogWindow logWindow = createLogWindow();
-        addWindow(logWindow, "logger");
-
-        GameWindow gameWindow = new GameWindow(this);
-        tryToLoad(gameWindow, "gameWindow", 400, 400, 320, 10, false);
-        addWindow(gameWindow, "gameWindow");
-
         setJMenuBar(generateMenuBar());
-        SwingUtilities.invokeLater(() -> {
-        tryToLoad(this, "main", screenSize.width, screenSize.height, 0, 0, true);});
-        for (String title : internalFrames.keySet()) {
-            SaveInternalFrameListener(internalFrames.get(title), title);
-        }
+
     }
 
-    protected LogWindow createLogWindow() {
-        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        tryToLoad(logWindow, "logger", 300, 800, 10, 10, false);
-        setMinimumSize(new Dimension(300, 800));
-        logWindow.pack();
-        Logger.debug("Протокол работает");
-        return logWindow;
-    }
-
-    protected void tryToLoad(Component window, String title, int defaultWidth, int defaultHeight, int locX, int locY, boolean defaultMaximized) {
-        if (!saveManager.loadWindow(window, title)) {
-            if (defaultMaximized && window instanceof Frame) {
-                Frame frame = (Frame) window;
-                SwingUtilities.invokeLater(() -> {
-                    frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-                });
-            } else {
-                window.setLocation(locX, locY);
-                window.setSize(defaultWidth, defaultHeight);
-            }
-        }
-    }
-
-    protected void addWindow(JInternalFrame frame, String title) {
+    public void addWindow(JInternalFrame frame) {
         desktopPane.add(frame);
-        internalFrames.put(title, frame);
         frame.setVisible(true);
     }
 
-    protected void SaveInternalFrameListener(JInternalFrame frame, String title) {
-        frame.addInternalFrameListener(new InternalFrameAdapter() {
-            @Override
-            public void internalFrameClosing(InternalFrameEvent e) {
-                saveManager.saveWindow(frame, title);
-            }
-        });
+    public void setPresenter( RobotPresenter presenter){
+        this.presenter = presenter;
     }
+
+
+
 
 //    protected JMenuBar createMenuBar() {
 //        JMenuBar menuBar = new JMenuBar();
@@ -266,19 +229,9 @@ public class MainApplicationFrame extends JFrame {
             for (JInternalFrame window : internalFrames.values()) {
                 window.doDefaultCloseAction();
             }
-//            for (String title : internalFrames.keySet()) {
-//                saveManager.saveWindow(internalFrames.get(title), title);
-//            }
-            saveManager.saveWindow(this, "main");
-            // this.dispose();
-//            SwingUtilities.invokeLater(() -> {
-//                System.exit(0);
-//            });
+            presenter.closeMain();
             System.exit(0);
-            // this.dispose();
 
-            // WindowEvent closingEvent = new WindowEvent(this, WindowEvent.WINDOW_CLOSED);
-            // this.dispatchEvent(closingEvent);
         }
-    }
+}
 }

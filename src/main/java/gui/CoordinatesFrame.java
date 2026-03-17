@@ -3,12 +3,12 @@ package gui;
 import javax.swing.*;
 import java.awt.*;
 
-public class CoordinatesDialog extends JDialog {
+public class CoordinatesFrame extends JInternalFrame {
     private final JLabel xLabel = new JLabel("X: 0");
     private final JLabel yLabel = new JLabel("Y: 0");
 
-    public CoordinatesDialog(JFrame owner) {
-        super(owner, "Координаты робота", false);
+    public CoordinatesFrame(JFrame owner) {
+        super("Координаты робота", true, true, true, true);
         setLayout(new GridLayout(2, 2, 5, 5));
         setLayout(new FlowLayout());
         add(xLabel);
