@@ -100,7 +100,7 @@ public class MainApplicationFrame extends JFrame {
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow, "logger");
 
-        GameWindow gameWindow = new GameWindow();
+        GameWindow gameWindow = new GameWindow(this);
         tryToLoad(gameWindow, "gameWindow", 400, 400, 320, 10, false);
         addWindow(gameWindow, "gameWindow");
 
