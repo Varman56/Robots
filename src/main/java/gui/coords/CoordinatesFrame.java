@@ -1,4 +1,4 @@
-package gui;
+package gui.coords;
 
 import javax.swing.*;
 import java.awt.*;
@@ -7,7 +7,7 @@ public class CoordinatesFrame extends JInternalFrame {
     private final JLabel xLabel = new JLabel("X: 0");
     private final JLabel yLabel = new JLabel("Y: 0");
 
-    public CoordinatesFrame(JFrame owner) {
+    public CoordinatesFrame() {
         super("Координаты робота", true, true, true, true);
         setLayout(new GridLayout(2, 2, 5, 5));
         setLayout(new FlowLayout());

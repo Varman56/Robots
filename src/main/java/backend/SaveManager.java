@@ -3,59 +3,51 @@ package backend;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import backend.WindowStatus;
 
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Type;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 public class SaveManager {
-    private final String filePath;
+    private final String FILEPATH = "WindowsPosition.json";
     private final Gson gson;
-    private Map<String, WindowStatus> windowsStatus;
+    private Map<WindowId, WindowStatus> windowsStatus;
 
-    public SaveManager(String filePath) {
-        this.filePath = filePath;
+    public SaveManager() {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.windowsStatus = load();
     }
 
-    public void saveWindow(Component window, String windowName) {
-        windowsStatus.put(windowName, new WindowStatus(window));
+    public void saveWindow(Component window, WindowId windowId) {
+        windowsStatus.put(windowId, new WindowStatus(window));
         saveToFile();
     }
 
-    public boolean loadWindow(Component window, String windowName) {
-        WindowStatus windowSettings = windowsStatus.get(windowName);
-        if (windowSettings != null) {
-            windowSettings.apply(window);
-            return true;
-        }
-        return false;
+    public void loadWindow(Component window, WindowId windowId) {
+        WindowStatus status = windowsStatus.getOrDefault(windowId, new WindowStatus(windowId.getDefaults()));
+        status.apply(window);
     }
 
     private void saveToFile() {
-        try (Writer writer = new FileWriter(filePath)) {
+        try (Writer writer = new FileWriter(FILEPATH)) {
             gson.toJson(windowsStatus, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private Map<String, WindowStatus> load() {
-        File file = new File(filePath);
-        if (!file.exists()) return new HashMap<>();
+    private Map<WindowId, WindowStatus> load() {
+        File file = new File(FILEPATH);
+        if (!file.exists()) return new EnumMap<>(WindowId.class);
 
         try (Reader reader = new FileReader(file)) {
-            Type type = new TypeToken<Map<String, WindowStatus>>() {
-            }.getType();
-            Map<String, WindowStatus> loaded = gson.fromJson(reader, type);
-            return loaded != null ? loaded : new HashMap<>();
+            Type type = new TypeToken<Map<WindowId, WindowStatus>>() {}.getType();
+            Map<WindowId, WindowStatus> loaded = gson.fromJson(reader, type);
+            return loaded != null ? new EnumMap<>(loaded) : new EnumMap<>(WindowId.class);
         } catch (IOException e) {
-            e.printStackTrace();
-            return new HashMap<>();
+            return new EnumMap<>(WindowId.class);
         }
     }
 }
