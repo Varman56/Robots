@@ -1,4 +1,4 @@
-package backend;
+package events;
 
 import java.awt.AWTEvent;
 import java.awt.EventQueue;

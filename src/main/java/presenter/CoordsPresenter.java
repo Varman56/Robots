@@ -1,6 +1,6 @@
 package presenter;
 
-import backend.EventDispatcher;
+import events.EventDispatcher;
 import backend.WindowId;
 import gui.coords.CoordinatesFrame;
 import events.RobotEvent;

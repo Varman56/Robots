@@ -6,7 +6,7 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.*;
 
-import backend.EventDispatcher;
+import events.EventDispatcher;
 import backend.SwingLocalization;
 import events.AppExitEvent;
 

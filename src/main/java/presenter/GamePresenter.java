@@ -1,6 +1,6 @@
 package presenter;
 
-import backend.EventDispatcher;
+import events.EventDispatcher;
 import backend.WindowId;
 import gui.game.GameVisualizer;
 import gui.game.GameWindow;
@@ -46,6 +46,12 @@ public class GamePresenter implements IJInternalFramePresenter {
                 robot.onModelUpdateEvent();
             }
         }, 0, 10);
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                gameVisualizer.repaint();
+            }
+        }, 0, 100);
 
         gameVisualizer.addMouseListener(new MouseAdapter() {
             @Override
