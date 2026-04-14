@@ -1,4 +1,4 @@
-package log;
+package gui.log;
 
 import java.util.ArrayList;
 import java.util.Collections;

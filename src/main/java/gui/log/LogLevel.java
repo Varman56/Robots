@@ -1,4 +1,4 @@
-package log;
+package gui.log;
 
 public enum LogLevel
 {
