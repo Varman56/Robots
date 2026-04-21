@@ -1,10 +1,11 @@
 package presenter;
 
-import events.EventDispatcher;
 import backend.WindowId;
+import events.RxEventBus;
 import gui.game.GameVisualizer;
 import gui.game.GameWindow;
 import events.RobotEvent;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import model.RobotModel;
 
 import javax.swing.*;
@@ -18,12 +19,11 @@ public class GamePresenter implements IJInternalFramePresenter {
     private final GameWindow view;
     private final GameVisualizer gameVisualizer = new GameVisualizer();
     private final Timer timer = new Timer("events generator", true);
-    private final EventDispatcher eventDispatcher;
+    private final CompositeDisposable disposables = new CompositeDisposable();
 
-    public GamePresenter(EventDispatcher eventDispatcher) {
+    public GamePresenter(RxEventBus eventBus, RobotModel robotModel) {
         this.view = new GameWindow(this.gameVisualizer);
-        this.robot = new RobotModel();
-        this.eventDispatcher = eventDispatcher;
+        this.robot = robotModel;
 
         initLogic();
     }
@@ -37,8 +37,8 @@ public class GamePresenter implements IJInternalFramePresenter {
     }
 
     private void initLogic() {
-        gameVisualizer.setRobotPos(robot.getRobotCenterX(), robot.getRobotCenterY(),
-                robot.getTargetX(), robot.getTargetY(), robot.getDirection());
+        disposables.add(robot.getStateObservable()
+                .subscribe(this::onRobotMoved));
 
         timer.schedule(new TimerTask() {
             @Override
@@ -59,8 +59,6 @@ public class GamePresenter implements IJInternalFramePresenter {
                 robot.setTargetPosition(e.getPoint());
             }
         });
-
-        eventDispatcher.registerHandler(RobotEvent.class, this::onRobotMoved);
 
         gameVisualizer.setDoubleBuffered(true);
     }

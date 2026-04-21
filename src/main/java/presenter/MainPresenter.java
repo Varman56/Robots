@@ -1,10 +1,12 @@
 package presenter;
 
-import events.EventDispatcher;
 import backend.SaveManager;
 import backend.WindowId;
+import events.RxEventBus;
 import gui.main.MainApplicationFrame;
 import events.AppExitEvent;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import model.RobotModel;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -18,20 +20,22 @@ public class MainPresenter {
     private final SaveManager saveManager = new SaveManager();
     private final List<IJInternalFramePresenter> internalPresenters = new ArrayList<>();
 
-    private final EventDispatcher eventDispatcher = EventDispatcher.getInstance();
-    private final MainApplicationFrame mainFrame = new MainApplicationFrame(eventDispatcher);
+    private final RxEventBus eventBus = new RxEventBus();
+    private final RobotModel sharedRobotModel = new RobotModel();
+    private final CompositeDisposable disposables = new CompositeDisposable();
+    private final MainApplicationFrame mainFrame = new MainApplicationFrame(eventBus);
 
     public MainPresenter() {
+        registerPresenter(new LogPresenter());
+        registerPresenter(new GamePresenter(eventBus, sharedRobotModel));
+        registerPresenter(new CoordsPresenter(eventBus));
 
-        registerPresenter(new LogPresenter(eventDispatcher));
-        registerPresenter(new GamePresenter(eventDispatcher));
-        registerPresenter(new CoordsPresenter(eventDispatcher));
+        disposables.add(eventBus.listen(AppExitEvent.class)
+                .subscribe(this::closeMain));
 
         SwingUtilities.invokeLater(() -> tryToLoad(mainFrame, WindowId.MAIN));
         mainFrame.pack();
         mainFrame.setVisible(true);
-
-        eventDispatcher.registerHandler(AppExitEvent.class, this::closeMain);
     }
 
     protected void registerPresenter(IJInternalFramePresenter p) {

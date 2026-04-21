@@ -1,16 +1,10 @@
 package events;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-
-public class RobotEvent extends ActionEvent {
-    public static final int ROBOT_MOVED = AWTEvent.RESERVED_ID_MAX + 1;
-
+public class RobotEvent {
     private final int x, y, t_x, t_y;
     private final double dir;
 
-    public RobotEvent(Object source, int x, int y, double dir, int t_x, int t_y) {
-        super(source, ROBOT_MOVED, "robot moved");
+    public RobotEvent(int x, int y, double dir, int t_x, int t_y) {
         this.x = x;
         this.y = y;
         this.dir = dir;
