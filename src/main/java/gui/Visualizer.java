@@ -1,4 +1,5 @@
 package gui;
 
-public class Visualizer {
+public interface Visualizer {
+    void redraw();
 }

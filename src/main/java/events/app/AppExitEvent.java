@@ -1,4 +1,4 @@
-package events;
+package events.app;
 
 public class AppExitEvent {
 }

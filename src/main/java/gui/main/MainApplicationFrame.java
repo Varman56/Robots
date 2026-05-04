@@ -7,14 +7,14 @@ import java.awt.event.WindowEvent;
 import javax.swing.*;
 
 import backend.SwingLocalization;
-import events.AppExitEvent;
-import events.RxEventBus;
+import events.EventBus;
+import events.app.AppExitEvent;
 
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private final RxEventBus bus;
+    private final EventBus bus;
 
-    public MainApplicationFrame(RxEventBus bus) {
+    public MainApplicationFrame(EventBus bus) {
         this.bus = bus;
         SwingLocalization.initialize();
 
@@ -63,7 +63,14 @@ public class MainApplicationFrame extends JFrame {
         );
 
         if (result == JOptionPane.YES_OPTION) {
+            for (JInternalFrame frame : getAllFrames()) {
+                frame.doDefaultCloseAction();
+            }
             bus.send(new AppExitEvent());
         }
+    }
+
+    private JInternalFrame[] getAllFrames() {
+        return desktopPane.getAllFrames();
     }
 }

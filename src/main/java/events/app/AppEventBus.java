@@ -1,4 +1,9 @@
 package events.app;
 
-public class AppEventBus {
+import events.EventBus;
+
+public class AppEventBus extends EventBus {
+    public AppEventBus() {
+        super();
+    }
 }
