@@ -7,12 +7,19 @@ import javax.swing.*;
 
 public class GameWindow extends JInternalFrame
 {
+    private final GameVisualizer visualizer;
     public GameWindow(GameVisualizer g)
     {
         super("Игровое поле", true, true, true, true);
+        this.visualizer = g;
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(g, BorderLayout.CENTER);
         getContentPane().add(panel);
         pack();
+    }
+
+    public  GameVisualizer getVisualizer()
+    {
+        return visualizer;
     }
 }
