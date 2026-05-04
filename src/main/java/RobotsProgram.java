@@ -2,7 +2,9 @@ import backend.SaveManager;
 import events.app.AppEventBus;
 import events.robots.RobotEventBus;
 import gui.main.MainApplicationFrame;
-import model.RobotModel;
+import model.BotRobot;
+import model.PlayerRobot;
+import model.Robot;
 import presenter.*;
 
 import javax.swing.SwingUtilities;
@@ -22,9 +24,10 @@ public class RobotsProgram {
             e.printStackTrace();
         }
         RobotEventBus rEventBus = new RobotEventBus();
-        List<RobotModel> robots = new ArrayList<>(ROBOT_COUNT);
-        for (int i = 0; i < ROBOT_COUNT; i++) {
-            robots.add(new RobotModel(rEventBus, i));
+        List<Robot> robots = new ArrayList<>(ROBOT_COUNT);
+        robots.add(new PlayerRobot(rEventBus, 0));
+        for (int i = 1; i < ROBOT_COUNT; i++) {
+            robots.add(new BotRobot(rEventBus, i));
         }
         SaveManager saveManager = new SaveManager();
         AppEventBus appEventBus = new AppEventBus();

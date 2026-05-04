@@ -3,12 +3,12 @@ package model;
 import events.robots.RobotEvent;
 import events.robots.RobotEventBus;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class RobotModel {
+
+public abstract class Robot {
     private final int id;
-    private final boolean playerControlled;
 
     private volatile double m_robotPositionX = -10;
     private volatile double m_robotPositionY = -10;
@@ -35,18 +35,21 @@ public class RobotModel {
 
     private final RobotEventBus bus;
 
-    public RobotModel(RobotEventBus bus, int id) {
+    protected Robot(RobotEventBus bus, int id) {
         this.bus = bus;
         this.id = id;
-        this.playerControlled = id == 0;
     }
 
-    public int getId() {
+    protected final int playfieldMidX() {
+        return (boundMinX + boundMaxX) / 2;
+    }
+
+    protected final int playfieldMidY() {
+        return (boundMinY + boundMaxY) / 2;
+    }
+
+    public final int getId() {
         return id;
-    }
-
-    public boolean isPlayerControlled() {
-        return playerControlled;
     }
 
     public void onPlayfieldBoundsChanged(int minX, int minY, int maxX, int maxY) {
@@ -67,22 +70,24 @@ public class RobotModel {
         m_robotPositionX = randomBoundedDouble(rnd, boundMinX, boundMaxX);
         m_robotPositionY = randomBoundedDouble(rnd, boundMinY, boundMaxY);
         m_robotDirection = rnd.nextDouble() * Math.PI * 2;
-        if (playerControlled) {
-            m_targetPositionX = (boundMinX + boundMaxX) / 2;
-            m_targetPositionY = (boundMinY + boundMaxY) / 2;
-        } else {
-            pickRandomTarget(rnd);
-        }
+        bootstrapTargets(rnd);
         emitState();
+    }
+
+    protected abstract void bootstrapTargets(ThreadLocalRandom rnd);
+
+    protected final void pickRandomTarget(ThreadLocalRandom rnd) {
+        m_targetPositionX = boundMinX + rnd.nextInt(boundMaxX - boundMinX + 1);
+        m_targetPositionY = boundMinY + rnd.nextInt(boundMaxY - boundMinY + 1);
+    }
+
+    protected final void setTargetPixels(int x, int y) {
+        m_targetPositionX = x;
+        m_targetPositionY = y;
     }
 
     private static double randomBoundedDouble(ThreadLocalRandom rnd, int min, int max) {
         return min + rnd.nextDouble() * (max - min);
-    }
-
-    private void pickRandomTarget(ThreadLocalRandom rnd) {
-        m_targetPositionX = boundMinX + rnd.nextInt(boundMaxX - boundMinX + 1);
-        m_targetPositionY = boundMinY + rnd.nextInt(boundMaxY - boundMinY + 1);
     }
 
     private static double distance(double x1, double y1, double x2, double y2) {
@@ -94,7 +99,6 @@ public class RobotModel {
     private static double angleTo(double fromX, double fromY, double toX, double toY) {
         double diffX = toX - fromX;
         double diffY = toY - fromY;
-
         return asNormalizedRadians(Math.atan2(diffY, diffX));
     }
 
@@ -105,10 +109,7 @@ public class RobotModel {
         double distance = distance(m_targetPositionX, m_targetPositionY,
                 m_robotPositionX, m_robotPositionY);
         if (distance <= TARGET_REACHED_DISTANCE) {
-            if (!playerControlled) {
-                pickRandomTarget(ThreadLocalRandom.current());
-                emitState();
-            }
+            onArrivedAtTarget();
             return;
         }
 
@@ -138,13 +139,9 @@ public class RobotModel {
         moveRobot(velocity, angularVelocity, 10);
     }
 
-    public void setTargetPosition(Point p) {
-        m_targetPositionX = p.x;
-        m_targetPositionY = p.y;
-        emitState();
-    }
+    protected abstract void onArrivedAtTarget();
 
-    private void emitState() {
+    protected final void emitState() {
         RobotEvent event = new RobotEvent(getRobotCenterX(), getRobotCenterY(), getDirection(), getTargetX(), getTargetY(), id);
         bus.send(event);
     }
@@ -186,10 +183,12 @@ public class RobotModel {
     }
 
     private static double applyLimits(double value, double min, double max) {
-        if (value < min)
+        if (value < min) {
             return min;
-        if (value > max)
+        }
+        if (value > max) {
             return max;
+        }
         return value;
     }
 
@@ -211,5 +210,8 @@ public class RobotModel {
 
     public double getDirection() {
         return this.m_robotDirection;
+    }
+
+    public void applyLocalPointerTarget(Point p) {
     }
 }

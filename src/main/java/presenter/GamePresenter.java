@@ -7,7 +7,7 @@ import gui.game.GameVisualizer;
 import gui.game.GameWindow;
 import events.robots.RobotEvent;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import model.RobotModel;
+import model.Robot;
 
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
@@ -17,23 +17,21 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GamePresenter extends InternalFramePresenter<GameWindow> {
     private static final int SIMULATION_PERIOD_MS = 10;
     private static final int FIELD_MARGIN_PX = 15;
 
-    private final List<RobotModel> robots;
+    private final List<Robot> robots;
     private final CompositeDisposable disposables = new CompositeDisposable();
     private final RobotEventBus robotBus;
     private final GameVisualizer visualizer;
 
     private final AtomicBoolean simulationStarted = new AtomicBoolean(false);
-    private ScheduledExecutorService robotExecutors;
     private final List<Thread> virtualThreads = new ArrayList<>();
 
-    public GamePresenter(SaveManager saveManager, RobotEventBus eventBus, List<RobotModel> robotModels) {
+    public GamePresenter(SaveManager saveManager, RobotEventBus eventBus, List<Robot> robotModels) {
         super(saveManager, new GameWindow(new GameVisualizer()), WindowId.GAME);
         this.visualizer = view.getVisualizer();
         this.robots = robotModels;
@@ -49,8 +47,8 @@ public class GamePresenter extends InternalFramePresenter<GameWindow> {
         visualizer.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (!robots.isEmpty()) {
-                    robots.get(0).setTargetPosition(e.getPoint());
+                for (Robot robot : robots) {
+                    robot.applyLocalPointerTarget(e.getPoint());
                 }
             }
         });
@@ -82,7 +80,7 @@ public class GamePresenter extends InternalFramePresenter<GameWindow> {
         if (robots.isEmpty()) {
             return;
         }
-        for (RobotModel robot : robots) {
+        for (Robot robot : robots) {
             robot.onPlayfieldBoundsChanged(FIELD_MARGIN_PX, FIELD_MARGIN_PX, innerMaxX, innerMaxY);
         }
         if (simulationStarted.compareAndSet(false, true)) {
@@ -91,9 +89,9 @@ public class GamePresenter extends InternalFramePresenter<GameWindow> {
     }
 
     private void startConcurrentSimulation() {
-        for (RobotModel robot : robots) {
+        for (Robot robot : robots) {
             Thread vt = Thread.ofVirtual()
-                    .name("robot-sim-" + robot.hashCode())
+                    .name("robot-sim-" + robot.getId())
                     .start(() -> {
                         while (!Thread.currentThread().isInterrupted()) {
                             robot.onModelUpdateEvent();
