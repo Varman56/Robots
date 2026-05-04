@@ -1,6 +1,7 @@
 package model;
 
 import events.RobotEvent;
+import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 import java.awt.*;
 
@@ -15,6 +16,12 @@ public class RobotModel {
 
     private static final double maxVelocity = 0.1;
     private static final double maxAngularVelocity = 0.0025;
+
+    private final BehaviorSubject<RobotEvent> stateSubject = BehaviorSubject.create();
+
+    public io.reactivex.rxjava3.core.Observable<RobotEvent> getStateObservable() {
+        return stateSubject;
+    }
 
     private static double distance(double x1, double y1, double x2, double y2) {
         double diffX = x1 - x2;
@@ -55,8 +62,8 @@ public class RobotModel {
     }
 
     private void generateEvent() {
-        RobotEvent robotEvent = new RobotEvent(this, getRobotCenterX(), getRobotCenterY(), getDirection(), getTargetX(), getTargetY());
-        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(robotEvent);
+        RobotEvent event = new RobotEvent(getRobotCenterX(), getRobotCenterY(), getDirection(), getTargetX(), getTargetY());
+        stateSubject.onNext(event);
     }
 
     private void moveRobot(double velocity, double angularVelocity, double duration) {

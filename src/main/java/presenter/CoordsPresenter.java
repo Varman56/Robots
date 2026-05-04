@@ -1,20 +1,21 @@
 package presenter;
 
-import events.EventDispatcher;
 import backend.WindowId;
+import events.RxEventBus;
 import gui.coords.CoordinatesFrame;
 import events.RobotEvent;
+import io.reactivex.rxjava3.disposables.Disposable;
 
 import javax.swing.*;
 
 public class CoordsPresenter implements IJInternalFramePresenter {
     private final CoordinatesFrame view;
-    private final EventDispatcher eventDispatcher;
+    private final Disposable subscription;
 
-    public CoordsPresenter(EventDispatcher eventDispatcher) {
+    public CoordsPresenter(RxEventBus eventBus) {
         this.view = new CoordinatesFrame();
-        this.eventDispatcher = eventDispatcher;
-        setupEventHandling();
+        this.subscription = eventBus.listen(RobotEvent.class)
+                .subscribe(event -> view.updateCoordinates(event.getX(), event.getY()));
     }
 
     public JInternalFrame GetWindow() {
@@ -23,13 +24,5 @@ public class CoordsPresenter implements IJInternalFramePresenter {
 
     public WindowId GetWindowId() {
         return WindowId.COORDS;
-    }
-
-    private void setupEventHandling() {
-        eventDispatcher.registerHandler(RobotEvent.class, this::onRobotMoved);
-    }
-
-    private void onRobotMoved(RobotEvent re) {
-        view.updateCoordinates(re.getX(), re.getY());
     }
 }

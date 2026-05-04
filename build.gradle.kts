@@ -14,6 +14,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("com.google.code.gson:gson:2.13.2")
+    implementation("io.reactivex.rxjava3:rxjava:3.1.12")
 }
 
 tasks.withType<JavaCompile> {

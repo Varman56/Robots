@@ -6,16 +6,16 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.*;
 
-import events.EventDispatcher;
 import backend.SwingLocalization;
-import events.AppExitEvent;
+import events.EventBus;
+import events.app.AppExitEvent;
 
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private final EventDispatcher eventDispatcher;
+    private final EventBus bus;
 
-    public MainApplicationFrame(EventDispatcher eventDispatcher) {
-        this.eventDispatcher = eventDispatcher;
+    public MainApplicationFrame(EventBus bus) {
+        this.bus = bus;
         SwingLocalization.initialize();
 
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -63,8 +63,14 @@ public class MainApplicationFrame extends JFrame {
         );
 
         if (result == JOptionPane.YES_OPTION) {
-            Toolkit.getDefaultToolkit().getSystemEventQueue()
-                    .postEvent(new AppExitEvent(this));
+            for (JInternalFrame frame : getAllFrames()) {
+                frame.doDefaultCloseAction();
+            }
+            bus.send(new AppExitEvent());
         }
+    }
+
+    private JInternalFrame[] getAllFrames() {
+        return desktopPane.getAllFrames();
     }
 }
