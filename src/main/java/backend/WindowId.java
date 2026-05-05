@@ -24,6 +24,12 @@ public enum WindowId {
         public WindowDefaults getDefaults() {
             return new WindowDefaults(false, 650, 10, 150, 80);
         }
+    },
+    ROBOT_STATES("robotStates") {
+        @Override
+        public WindowDefaults getDefaults() {
+            return new WindowDefaults(false, 10, 420, 520, 320);
+        }
     };
 
     private final String key;

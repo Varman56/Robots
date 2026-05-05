@@ -1,28 +1,33 @@
 package presenter;
 
+import backend.SaveManager;
 import backend.WindowId;
-import events.RxEventBus;
+import events.robots.RobotEvent;
+import events.robots.RobotEventBus;
 import gui.coords.CoordinatesFrame;
-import events.RobotEvent;
-import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 
-import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
 
-public class CoordsPresenter implements IJInternalFramePresenter {
-    private final CoordinatesFrame view;
-    private final Disposable subscription;
+public class CoordsPresenter extends InternalFramePresenter {
+    private final CompositeDisposable disposables = new CompositeDisposable();
 
-    public CoordsPresenter(RxEventBus eventBus) {
-        this.view = new CoordinatesFrame();
-        this.subscription = eventBus.listen(RobotEvent.class)
-                .subscribe(event -> view.updateCoordinates(event.getX(), event.getY()));
-    }
-
-    public JInternalFrame GetWindow() {
-        return this.view;
-    }
-
-    public WindowId GetWindowId() {
-        return WindowId.COORDS;
+    public CoordsPresenter(SaveManager saveManager, RobotEventBus robotBus) {
+        super(saveManager, new CoordinatesFrame(), WindowId.COORDS);
+        disposables.add(
+                robotBus.listen(RobotEvent.class)
+                        .filter(re -> re.getId() == 0)
+                        .subscribe(re -> {
+                            CoordinatesFrame cf = (CoordinatesFrame) getView();
+                            cf.updateCoordinates(re.getX(), re.getY());
+                        })
+        );
+        view.addInternalFrameListener(new InternalFrameAdapter() {
+            @Override
+            public void internalFrameClosed(InternalFrameEvent e) {
+                disposables.clear();
+            }
+        });
     }
 }

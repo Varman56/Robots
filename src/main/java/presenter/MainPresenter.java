@@ -32,5 +32,6 @@ public class MainPresenter {
         saveManager.saveWindow(mainFrame, WindowId.MAIN);
         disposables.clear();
         mainFrame.dispose();
+        // System.exit(0);
     }
 }

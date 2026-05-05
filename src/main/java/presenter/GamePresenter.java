@@ -1,70 +1,66 @@
 package presenter;
 
+import backend.SaveManager;
 import backend.WindowId;
-import events.RxEventBus;
+import events.robots.RobotEventBus;
 import gui.game.GameVisualizer;
 import gui.game.GameWindow;
-import events.RobotEvent;
+import events.robots.RobotEvent;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import model.RobotModel;
+import model.Robot;
+import model.RobotFleet;
 
-import javax.swing.*;
+import javax.swing.event.InternalFrameAdapter;
+import javax.swing.event.InternalFrameEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class GamePresenter implements IJInternalFramePresenter {
-    private final RobotModel robot;
-    private final GameWindow view;
-    private final GameVisualizer gameVisualizer = new GameVisualizer();
-    private final Timer timer = new Timer("events generator", true);
+public class GamePresenter extends InternalFramePresenter<GameWindow> {
+    private final RobotFleet fleet;
     private final CompositeDisposable disposables = new CompositeDisposable();
+    private final RobotEventBus robotBus;
+    private final GameVisualizer visualizer;
 
-    public GamePresenter(RxEventBus eventBus, RobotModel robotModel) {
-        this.view = new GameWindow(this.gameVisualizer);
-        this.robot = robotModel;
+    public GamePresenter(SaveManager saveManager, RobotEventBus eventBus, RobotFleet fleet) {
+        super(saveManager, new GameWindow(new GameVisualizer()), WindowId.GAME);
+        this.visualizer = view.getVisualizer();
+        this.fleet = fleet;
+        this.robotBus = eventBus;
 
+        this.fleet.setOnRobotRemoved(visualizer::removeRobotState);
         initLogic();
     }
 
-    public JInternalFrame GetWindow() {
-        return this.view;
-    }
-
-    public WindowId GetWindowId() {
-        return WindowId.GAME;
-    }
-
     private void initLogic() {
-        disposables.add(robot.getStateObservable()
-                .subscribe(this::onRobotMoved));
+        disposables.add(robotBus.listen(RobotEvent.class)
+                .subscribe(visualizer::setRobotPos));
 
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                robot.onModelUpdateEvent();
-            }
-        }, 0, 10);
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                gameVisualizer.repaint();
-            }
-        }, 0, 100);
-
-        gameVisualizer.addMouseListener(new MouseAdapter() {
+        visualizer.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                robot.setTargetPosition(e.getPoint());
+                for (Robot robot : fleet.getRobots()) {
+                    robot.applyLocalPointerTarget(e.getPoint());
+                }
             }
         });
 
-        gameVisualizer.setDoubleBuffered(true);
-    }
+        visualizer.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                fleet.applyViewportSize(visualizer.getWidth(), visualizer.getHeight());
+            }
+        });
 
-    private void onRobotMoved(RobotEvent re) {
-        gameVisualizer.setRobotPos(re.getX(), re.getY(), re.getT_x(), re.getT_y(), re.getDir());
-        gameVisualizer.repaint();
+        view.addInternalFrameListener(new InternalFrameAdapter() {
+            @Override
+            public void internalFrameClosed(InternalFrameEvent e) {
+                fleet.shutdownSimulation();
+                disposables.clear();
+            }
+        });
+
+        visualizer.setDoubleBuffered(true);
     }
 }
