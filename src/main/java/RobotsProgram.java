@@ -5,6 +5,7 @@ import gui.main.MainApplicationFrame;
 import model.BotRobot;
 import model.PlayerRobot;
 import model.Robot;
+import model.RobotFleet;
 import presenter.*;
 
 import javax.swing.SwingUtilities;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RobotsProgram {
-    private static final int ROBOT_COUNT = 100;
+    private static final int ROBOT_COUNT = 10;
 
     private static MainPresenter presenter;
 
@@ -24,22 +25,25 @@ public class RobotsProgram {
             e.printStackTrace();
         }
         RobotEventBus rEventBus = new RobotEventBus();
-        List<Robot> robots = new ArrayList<>(ROBOT_COUNT);
-        robots.add(new PlayerRobot(rEventBus, 0));
+        List<Robot> initialRobots = new ArrayList<>(ROBOT_COUNT);
+        initialRobots.add(new PlayerRobot(rEventBus, 0));
         for (int i = 1; i < ROBOT_COUNT; i++) {
-            robots.add(new BotRobot(rEventBus, i));
+            initialRobots.add(new BotRobot(rEventBus, i));
         }
+        RobotFleet fleet = new RobotFleet(rEventBus, initialRobots);
+
         SaveManager saveManager = new SaveManager();
         AppEventBus appEventBus = new AppEventBus();
 
         List<InternalFramePresenter> presenters = List.of(
                 new LogPresenter(saveManager),
-                new GamePresenter(saveManager, rEventBus, robots),
-                new CoordsPresenter(saveManager, rEventBus)
+                new GamePresenter(saveManager, rEventBus, fleet),
+                new CoordsPresenter(saveManager, rEventBus),
+                new RobotStatePresenter(saveManager, rEventBus, fleet)
         );
 
         MainApplicationFrame mainFrame = new MainApplicationFrame(appEventBus);
-        for (InternalFramePresenter presenter: presenters) {
+        for (InternalFramePresenter presenter : presenters) {
             mainFrame.addWindow(presenter.getView());
         }
         SwingUtilities.invokeLater(() -> {

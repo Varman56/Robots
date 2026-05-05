@@ -21,6 +21,11 @@ public class GameVisualizer extends JPanel implements Visualizer {
         redraw();
     }
 
+    public void removeRobotState(int robotId) {
+        robotStates.remove(robotId);
+        redraw();
+    }
+
     public void redraw() {
         EventQueue.invokeLater(this::repaint);
     }
