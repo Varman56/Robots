@@ -30,6 +30,11 @@ public class GameVisualizer extends JPanel implements Visualizer {
         EventQueue.invokeLater(this::repaint);
     }
 
+    public void clear() {
+        robotStates.clear();
+        redraw();
+    }
+
     @Override
     public void paint(Graphics g) {
         super.paint(g);

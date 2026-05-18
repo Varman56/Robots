@@ -2,14 +2,17 @@ package presenter;
 
 import backend.SaveManager;
 import backend.WindowId;
+import events.robots.ClearRobotsEvent;
 import events.robots.RobotEvent;
 import events.robots.RobotEventBus;
+import events.robots.RobotRemovedEvent;
 import gui.robotstate.RobotStateFrame;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import model.RobotFleet;
+import network.GameClient;
+import network.NetworkMessage;
 
-import javax.swing.JOptionPane;
-import javax.swing.Timer;
+import javax.swing.*;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 import java.util.ArrayList;
@@ -27,6 +30,7 @@ public class RobotStatePresenter extends InternalFramePresenter<RobotStateFrame>
     private final ConcurrentHashMap<Integer, RobotEvent> latestById = new ConcurrentHashMap<>();
 
     private final Timer uiTimer;
+    private GameClient networkClient;
 
     public RobotStatePresenter(SaveManager saveManager, RobotEventBus robotBus, RobotFleet fleet) {
         super(saveManager, new RobotStateFrame(), WindowId.ROBOT_STATES);
@@ -34,6 +38,17 @@ public class RobotStatePresenter extends InternalFramePresenter<RobotStateFrame>
 
         disposables.add(robotBus.listen(RobotEvent.class)
                 .subscribe(event -> latestById.put(event.getId(), event)));
+
+        disposables.add(robotBus.listen(RobotRemovedEvent.class)
+                .subscribe(event -> {
+                    latestById.remove(event.id());
+
+                    SwingUtilities.invokeLater(this::flushTable);
+                }));
+
+        disposables.add(robotBus.listen(ClearRobotsEvent.class).subscribe(e -> {
+            latestById.clear();
+        }));
 
         uiTimer = new Timer(UI_REFRESH_MS, e -> flushTable());
         uiTimer.setRepeats(true);
@@ -53,27 +68,21 @@ public class RobotStatePresenter extends InternalFramePresenter<RobotStateFrame>
     }
 
     private void onAddBot() {
-        fleet.addBot();
+        if (networkClient != null) {
+            networkClient.sendRequest(NetworkMessage.Type.ADD_ROBOT_REQUEST, "");
+        } else {
+            fleet.addBot();
+        }
     }
 
     private void onRemoveSelected() {
         int id = getView().getSelectedRobotId();
-        if (id < 0) {
-            JOptionPane.showMessageDialog(getView(),
-                    "Выберите строку с роботом.",
-                    "Удаление",
-                    JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-        if (id == 0) {
-            JOptionPane.showMessageDialog(getView(),
-                    "Робота игрока (id 0) удалить нельзя.",
-                    "Удаление",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        if (fleet.removeRobot(id)) {
-            latestById.remove(id);
+        if (id <= 0) return;
+
+        if (networkClient != null) {
+            networkClient.sendRequest(NetworkMessage.Type.REMOVE_ROBOT_REQUEST, String.valueOf(id));
+        } else {
+            fleet.removeRobot(id);
         }
     }
 
@@ -96,4 +105,10 @@ public class RobotStatePresenter extends InternalFramePresenter<RobotStateFrame>
         uiTimer.stop();
         disposables.clear();
     }
+
+    public void setNetworkClient(GameClient client) {
+        this.networkClient = client;
+    }
+
+
 }

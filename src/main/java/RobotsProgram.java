@@ -2,10 +2,12 @@ import backend.SaveManager;
 import events.app.AppEventBus;
 import events.robots.RobotEventBus;
 import gui.main.MainApplicationFrame;
+import gui.main.MainMenuBar;
 import model.BotRobot;
 import model.PlayerRobot;
 import model.Robot;
 import model.RobotFleet;
+import network.NetworkController;
 import presenter.*;
 
 import javax.swing.SwingUtilities;
@@ -14,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RobotsProgram {
-    private static final int ROBOT_COUNT = 10;
+    private static final int ROBOT_COUNT = 100;
 
     private static MainPresenter presenter;
 
@@ -35,14 +37,22 @@ public class RobotsProgram {
         SaveManager saveManager = new SaveManager();
         AppEventBus appEventBus = new AppEventBus();
 
-        List<InternalFramePresenter> presenters = List.of(
-                new LogPresenter(saveManager),
-                new GamePresenter(saveManager, rEventBus, fleet),
-                new CoordsPresenter(saveManager, rEventBus),
-                new RobotStatePresenter(saveManager, rEventBus, fleet)
-        );
+        LogPresenter logPres = new LogPresenter(saveManager);
+        GamePresenter gamePres = new GamePresenter(saveManager, rEventBus, fleet);
+        CoordsPresenter coordsPres = new CoordsPresenter(saveManager, rEventBus);
+        RobotStatePresenter statePres = new RobotStatePresenter(saveManager, rEventBus, fleet);
+        List<InternalFramePresenter> presenters = new ArrayList<>();
+        presenters.add(logPres);
+        presenters.add(gamePres);
+        presenters.add(coordsPres);
+        presenters.add(statePres);
+
+        NetworkController netController = new NetworkController(rEventBus, fleet);
 
         MainApplicationFrame mainFrame = new MainApplicationFrame(appEventBus);
+
+        mainFrame.setJMenuBar(new MainMenuBar(mainFrame, netController, gamePres, statePres));
+
         for (InternalFramePresenter presenter : presenters) {
             mainFrame.addWindow(presenter.getView());
         }

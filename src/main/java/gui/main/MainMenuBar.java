@@ -1,6 +1,10 @@
 package gui.main;
 
 import gui.log.Logger;
+import network.NetworkController;
+import presenter.GamePresenter;
+import presenter.RobotStatePresenter;
+
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
@@ -8,11 +12,30 @@ import java.util.function.Consumer;
 public class MainMenuBar extends JMenuBar {
     private final MainApplicationFrame frame;
 
-    public MainMenuBar(MainApplicationFrame frame) {
+    public MainMenuBar(MainApplicationFrame frame, NetworkController netController, GamePresenter gamePresenter, RobotStatePresenter rsp) {
         this.frame = frame;
         add(createLookAndFeelMenu());
         add(createTestMenu());
         add(createExitMenu());
+        add(createNetworkMenu(netController, gamePresenter, rsp));
+    }
+
+    private JMenu createNetworkMenu(NetworkController netController, GamePresenter gamePresenter, RobotStatePresenter rsp) {
+        JMenu menu = new JMenu("Сеть");
+
+        addMenuItem(menu, "Хост (Старт сервера)", KeyEvent.VK_H, (e) -> {
+            netController.startHost(1234);
+            JOptionPane.showMessageDialog(frame, "Сервер запущен на порту 1234");
+        });
+
+        addMenuItem(menu, "Подключиться", KeyEvent.VK_C, (e) -> {
+            String host = JOptionPane.showInputDialog(frame, "Введите IP адрес:", "127.0.0.1");
+            if (host != null && !host.isEmpty()) {
+                netController.connectTo(host, 1234, gamePresenter, rsp);
+            }
+        });
+
+        return menu;
     }
 
     private JMenu createExitMenu() {
