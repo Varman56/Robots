@@ -18,11 +18,16 @@ public class GameClient {
     private final RobotEventBus bus;
     private final Gson gson = new Gson();
     private PrintWriter out;
+    private Runnable onDisconnect;
 
     public GameClient(String host, int port, RobotEventBus bus) {
         this.host = host;
         this.port = port;
         this.bus = bus;
+    }
+
+    public void setOnDisconnect(Runnable callback) {
+        this.onDisconnect = callback;
     }
 
     public void connect() {
@@ -54,6 +59,8 @@ public class GameClient {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                if (onDisconnect != null) onDisconnect.run();
             }
         });
         networkThread.setDaemon(true);

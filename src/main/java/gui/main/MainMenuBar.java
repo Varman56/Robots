@@ -12,27 +12,42 @@ import java.util.function.Consumer;
 public class MainMenuBar extends JMenuBar {
     private final MainApplicationFrame frame;
 
-    public MainMenuBar(MainApplicationFrame frame, NetworkController netController, GamePresenter gamePresenter, RobotStatePresenter rsp) {
+    public MainMenuBar(MainApplicationFrame frame, NetworkController netController) {
         this.frame = frame;
         add(createLookAndFeelMenu());
         add(createTestMenu());
         add(createExitMenu());
-        add(createNetworkMenu(netController, gamePresenter, rsp));
+        add(createNetworkMenu(netController));
     }
 
-    private JMenu createNetworkMenu(NetworkController netController, GamePresenter gamePresenter, RobotStatePresenter rsp) {
+    private JMenu createNetworkMenu(NetworkController netController) {
         JMenu menu = new JMenu("Сеть");
 
-        addMenuItem(menu, "Хост (Старт сервера)", KeyEvent.VK_H, (e) -> {
-            netController.startHost(1234);
-            JOptionPane.showMessageDialog(frame, "Сервер запущен на порту 1234");
+        addMenuItem(menu, "Старт Сервера (Хост)", KeyEvent.VK_H, (e) -> {
+            String input = JOptionPane.showInputDialog(frame, "Введите порт:", "1234");
+            if (input != null) {
+                try {
+                    int port = Integer.parseInt(input);
+                    netController.startHost(port);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(frame, "Неверный формат порта");
+                }
+            }
         });
 
-        addMenuItem(menu, "Подключиться", KeyEvent.VK_C, (e) -> {
-            String host = JOptionPane.showInputDialog(frame, "Введите IP адрес:", "127.0.0.1");
-            if (host != null && !host.isEmpty()) {
-                netController.connectTo(host, 1234, gamePresenter, rsp);
+        addMenuItem(menu, "Подключиться к Серверу", KeyEvent.VK_C, (e) -> {
+            String host = JOptionPane.showInputDialog(frame, "IP:", "127.0.0.1");
+            String portStr = JOptionPane.showInputDialog(frame, "Порт:", "1234");
+            if (host != null && portStr != null) {
+                netController.connectTo(host, Integer.parseInt(portStr));
             }
+        });
+
+        menu.addSeparator();
+
+        addMenuItem(menu, "Вернуться в локальный режим", KeyEvent.VK_D, (e) -> {
+            netController.stopAll();
+            JOptionPane.showMessageDialog(frame, "Работа сети остановлена. Локальный режим включен.");
         });
 
         return menu;

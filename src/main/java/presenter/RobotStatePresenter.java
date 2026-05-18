@@ -108,6 +108,8 @@ public class RobotStatePresenter extends InternalFramePresenter<RobotStateFrame>
 
     public void setNetworkClient(GameClient client) {
         this.networkClient = client;
+        latestById.clear();
+        flushTable();
     }
 
 

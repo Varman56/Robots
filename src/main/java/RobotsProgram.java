@@ -47,11 +47,11 @@ public class RobotsProgram {
         presenters.add(coordsPres);
         presenters.add(statePres);
 
-        NetworkController netController = new NetworkController(rEventBus, fleet);
+        NetworkController netController = new NetworkController(rEventBus, fleet, gamePres, statePres);
 
         MainApplicationFrame mainFrame = new MainApplicationFrame(appEventBus);
 
-        mainFrame.setJMenuBar(new MainMenuBar(mainFrame, netController, gamePres, statePres));
+        mainFrame.setJMenuBar(new MainMenuBar(mainFrame, netController));
 
         for (InternalFramePresenter presenter : presenters) {
             mainFrame.addWindow(presenter.getView());

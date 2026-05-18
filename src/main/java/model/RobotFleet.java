@@ -118,6 +118,15 @@ public final class RobotFleet {
                 .start(() -> runSimulationLoop(robot)));
     }
 
+    public void restartSimulation() {
+        shutdownSimulation();
+        simulationStarted.set(true);
+        boundsValid = true;
+        for (Robot robot : robots) {
+            startSimThread(robot);
+        }
+    }
+
     private void runSimulationLoop(Robot robot) {
         while (!Thread.currentThread().isInterrupted()) {
             robot.onModelUpdateEvent();
