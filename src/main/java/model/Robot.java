@@ -66,6 +66,14 @@ public abstract class Robot {
         }
     }
 
+    public void syncInternalState(int x, int y, double direction, int targetX, int targetY) {
+        this.m_robotPositionX = x;
+        this.m_robotPositionY = y;
+        this.m_robotDirection = direction;
+        this.m_targetPositionX = targetX;
+        this.m_targetPositionY = targetY;
+    }
+
     private void bootstrapWithinBounds(ThreadLocalRandom rnd) {
         m_robotPositionX = randomBoundedDouble(rnd, boundMinX, boundMaxX);
         m_robotPositionY = randomBoundedDouble(rnd, boundMinY, boundMaxY);
