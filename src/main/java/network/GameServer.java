@@ -26,7 +26,6 @@ public class GameServer {
         serverThread = new Thread(() -> {
             try {
                 serverSocket = new ServerSocket(port);
-                System.out.println("Сервер запущен на порту: " + port);
 
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
@@ -101,7 +100,6 @@ public class GameServer {
                             }
                         }
                     } catch (Exception ex) {
-                        System.err.println("Ошибка обработки сообщения от клиента: " + ex.getMessage());
                     }
                 }
             } catch (IOException e) {
