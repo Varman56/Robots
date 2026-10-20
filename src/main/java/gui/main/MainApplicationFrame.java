@@ -28,7 +28,6 @@ public class MainApplicationFrame extends JFrame {
 
         setupBounds();
         setContentPane(desktopPane);
-        setJMenuBar(new MainMenuBar(this));
     }
 
     private void setupBounds() {

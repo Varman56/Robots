@@ -1,6 +1,7 @@
 package model;
 
 import events.robots.RobotEventBus;
+import events.robots.RobotRemovedEvent;
 
 import java.util.Collection;
 import java.util.List;
@@ -81,6 +82,7 @@ public final class RobotFleet {
             t.interrupt();
         }
         onRobotRemoved.accept(id);
+        bus.send(new RobotRemovedEvent(id));
         return true;
     }
 
@@ -114,6 +116,15 @@ public final class RobotFleet {
         simThreads.computeIfAbsent(id, k -> Thread.ofVirtual()
                 .name("robot-sim-" + id)
                 .start(() -> runSimulationLoop(robot)));
+    }
+
+    public void restartSimulation() {
+        shutdownSimulation();
+        simulationStarted.set(true);
+        boundsValid = true;
+        for (Robot robot : robots) {
+            startSimThread(robot);
+        }
     }
 
     private void runSimulationLoop(Robot robot) {
